@@ -1,0 +1,2332 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>職護工作日誌</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body { 
+            font-family: 'Microsoft JhengHei', sans-serif; 
+            background: #D6DCDB;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .hidden { 
+            display: none !important; 
+        }
+        
+        .card {
+            background: #f8f9fa;
+            backdrop-filter: blur(10px);
+            border: 1px solid #e9ecef;
+            box-shadow: 0 8px 32px rgba(141, 107, 97, 0.15);
+            border-radius: 1rem;
+            padding: 2.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .btn-primary, .btn-success, .btn-todo, .btn-stats, .btn-change, .btn-template, .btn-backup, .btn-supplies {
+            background: #A1B0AD;
+            border: none;
+            color: #8D6B61;
+            padding: 1rem 2rem;
+            border-radius: 0.75rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 12px rgba(161, 176, 173, 0.3);
+            width: 100%;
+        }
+
+        .btn-primary:hover, .btn-success:hover, .btn-todo:hover, .btn-stats:hover, .btn-change:hover, .btn-template:hover, .btn-backup:hover, .btn-supplies:hover {
+            background: #8D9B98;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(141, 155, 152, 0.4);
+        }
+
+        .btn-cancel {
+            background: #82898D;
+            border: none;
+            color: #F2EEED;
+            padding: 1rem 2.5rem;
+            border-radius: 0.75rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(130, 137, 141, 0.2);
+        }
+
+        .btn-cancel:hover {
+            background: #8D6B61;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(130, 137, 141, 0.3);
+        }
+
+        .form-input {
+            border: 2px solid #C6CCC0;
+            transition: all 0.3s ease;
+            background: #F2EEED;
+            border-radius: 0.75rem;
+            padding: 1rem 1.25rem;
+            font-size: 1.125rem;
+            width: 100%;
+            color: #8D6B61;
+        }
+
+        .form-input:focus {
+            border-color: #C39289;
+            box-shadow: 0 0 0 3px rgba(195, 146, 137, 0.15);
+            background: rgba(242, 238, 237, 0.98);
+            outline: none;
+        }
+
+        .header-gradient {
+            color: #8D6B61;
+            text-align: center;
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .section-header {
+            color: #8D6B61;
+            border-bottom: 2px solid #82898D;
+            padding-bottom: 0.5rem;
+            font-size: 1.875rem;
+            font-weight: bold;
+            margin-bottom: 2rem;
+        }
+
+        .entry-card {
+            background: #F2EEED;
+            border: 1px solid #82898D;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(141, 107, 97, 0.1);
+        }
+
+        .entry-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(141, 107, 97, 0.15);
+            border-color: #82898D;
+        }
+
+        .change-card {
+            background: #F2EEED;
+            border: 1px solid #82898D;
+            border-left: 4px solid #82898D;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(195, 146, 137, 0.1);
+        }
+
+        .change-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(195, 146, 137, 0.15);
+        }
+
+        .change-type-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .change-type-new {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+        }
+
+        .change-type-modify {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: white;
+        }
+
+        .change-type-remove {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .tag {
+            background: #E3E7EA;
+            color: #8D6B61;
+            border: 1px solid #D6DCDB;
+            border-radius: 0.75rem;
+            padding: 1rem;
+        }
+
+        .search-container {
+            background: rgba(242, 238, 237, 0.9);
+            border: 1px solid #82898D;
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 3rem;
+            box-shadow: 0 4px 16px rgba(141, 107, 97, 0.1);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: #F2EEED;
+            border-radius: 1rem;
+            padding: 2rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(141, 107, 97, 0.3);
+            border: 1px solid #82898D;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #8D6B61;
+            margin-bottom: 1rem;
+        }
+
+        .modal-message {
+            font-size: 1.125rem;
+            color: #82898D;
+            margin-bottom: 2rem;
+            line-height: 1.5;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .modal-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal-btn-confirm {
+            background: #C39289;
+            color: #F2EEED;
+        }
+
+        .modal-btn-confirm:hover {
+            background: #E1AA8D;
+            color: #8D6B61;
+        }
+
+        .modal-btn-cancel {
+            background: #C6CCC0;
+            color: #8D6B61;
+        }
+
+        .modal-btn-cancel:hover {
+            background: #D6DCDB;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #8D6B61;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: #C39289;
+            color: #F2EEED;
+        }
+
+        .icon-btn {
+            transition: all 0.3s ease;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .icon-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .edit-btn {
+            background: #A1B0AD;
+            color: #8D6B61;
+        }
+
+        .delete-btn {
+            background: #C39289;
+            color: #F2EEED;
+            font-weight: bold;
+            border: 2px solid #E1AA8D;
+        }
+
+        .delete-btn:hover {
+            background: #C0B0A2;
+            color: #F2EEED;
+            transform: scale(1.15);
+            box-shadow: 0 4px 12px rgba(192, 176, 162, 0.5);
+        }
+
+        .template-section {
+            background: #E3E7EA;
+            border: 1px solid #D6DCDB;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            opacity: 0.6;
+        }
+
+        .template-btn {
+            background: #E3E7EA;
+            color: #8D6B61;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin: 0.25rem;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .template-btn:hover {
+            background: #C39289;
+            color: #F2EEED;
+        }
+
+        .tag-input-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+            border: 2px solid #C6CCC0;
+            border-radius: 0.75rem;
+            padding: 0.5rem;
+            background: #F2EEED;
+        }
+
+        .tag-input-container:focus-within {
+            border-color: #C39289;
+            box-shadow: 0 0 0 3px rgba(195, 146, 137, 0.15);
+        }
+
+        .tag-item {
+            background: #C39289;
+            color: #F2EEED;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-weight: 500;
+        }
+
+        .tag-remove {
+            background: none;
+            border: none;
+            color: #F2EEED;
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 0;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tag-remove:hover {
+            background: rgba(242, 238, 237, 0.3);
+        }
+
+        .tag-input {
+            border: none;
+            outline: none;
+            background: none;
+            flex: 1;
+            min-width: 100px;
+            font-size: 1rem;
+            color: #8D6B61;
+        }
+
+        .tab-container {
+            display: flex;
+            border-bottom: 2px solid #82898D;
+            margin-bottom: 2rem;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #8D6B61;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            color: #82898D;
+            border-bottom-color: #82898D;
+            background: #E3E7EA;
+            opacity: 0.8;
+        }
+
+        .tab-btn:hover {
+            background: #E3E7EA;
+            opacity: 0.5;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            color: white;
+            font-weight: 500;
+            z-index: 1001;
+            animation: slideIn 0.3s ease;
+        }
+
+        .notification.success {
+            background: #27ae60;
+        }
+
+        .notification.warning {
+            background: #f39c12;
+        }
+
+        .notification.error {
+            background: #e74c3c;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .flex { display: flex; }
+        .flex-wrap { flex-wrap: wrap; }
+        .items-center { align-items: center; }
+        .justify-center { justify-content: center; }
+        .gap-6 { gap: 1.5rem; }
+        .gap-4 { gap: 1rem; }
+        .gap-2 { gap: 0.5rem; }
+        .mb-12 { margin-bottom: 3rem; }
+        .mb-8 { margin-bottom: 2rem; }
+        .mb-6 { margin-bottom: 1.5rem; }
+        .mb-4 { margin-bottom: 1rem; }
+        .mb-3 { margin-bottom: 0.75rem; }
+        .mt-6 { margin-top: 1.5rem; }
+        .grid { display: grid; }
+        .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+        .col-span-2 { grid-column: span 2; }
+        .space-y-8 > * + * { margin-top: 2rem; }
+        .text-center { text-align: center; }
+        .relative { position: relative; }
+        .absolute { position: absolute; }
+        .left-5 { left: 1.25rem; }
+        .top-1/2 { top: 50%; }
+        .transform { transform: translateY(-50%); }
+        .w-full { width: 100%; }
+        .text-2xl { font-size: 1.5rem; }
+        .text-xl { font-size: 1.25rem; }
+        .text-lg { font-size: 1.125rem; }
+        .font-bold { font-weight: bold; }
+        .font-semibold { font-weight: 600; }
+        .pl-14 { padding-left: 3.5rem; }
+        .pr-6 { padding-right: 1.5rem; }
+        .px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+        .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+        .pt-8 { padding-top: 2rem; }
+
+        @media (max-width: 768px) {
+            .grid-cols-2 { grid-template-columns: 1fr; }
+            .container { padding: 1rem; }
+            .form-input { font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="mb-12 text-center">
+            <h1 class="header-gradient">職護工作日誌</h1>
+            <p class="text-xl" style="color: #8D6B61">記錄每日工作內容、重要事項與工作變更</p>
+            <div class="mt-6" style="width: 8rem; height: 0.25rem; margin: 1.5rem auto; background: #82898D; border-radius: 2px;"></div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 3rem; max-width: 1000px; margin-left: auto; margin-right: auto;">
+            <button onclick="showAddForm()" class="btn-primary">
+                <span style="font-size: 1.2rem;">📝</span> 新增日誌
+            </button>
+            <button onclick="showChangeForm()" class="btn-change">
+                <span style="font-size: 1.2rem;">🔄</span> 工作變更
+            </button>
+            <button onclick="showSuppliesModal()" class="btn-supplies">
+                <span style="font-size: 1.2rem;">🏥</span> 急救箱耗材
+            </button>
+            <button onclick="exportData()" class="btn-success">
+                <span style="font-size: 1.2rem;">📤</span> 匯出
+            </button>
+            <button onclick="showImportModal()" class="btn-success">
+                <span style="font-size: 1.2rem;">📥</span> 匯入
+            </button>
+            <button onclick="showTodoModal()" class="btn-todo">
+                <span style="font-size: 1.2rem;">☐</span> 待辦
+            </button>
+            <button onclick="showStatsModal()" class="btn-stats">
+                <span style="font-size: 1.2rem;">📊</span> 統計
+            </button>
+            <button onclick="showBackupSettings()" class="btn-backup">
+                <span style="font-size: 1.2rem;">💾</span> 備份
+            </button>
+        </div>
+
+        <div class="search-container">
+            <div class="flex flex-wrap gap-6">
+                <div style="flex: 1; min-width: 20rem;">
+                    <div class="relative">
+                        <span class="absolute left-5 top-1/2 transform" style="color: #8D6B61; font-size: 1.5rem;">🔍</span>
+                        <input type="text" id="searchInput" placeholder="搜尋內容..." oninput="filterContent()" class="form-input pl-14 pr-6" />
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span style="color: #8D6B61; font-size: 1.5rem;">📋</span>
+                    <select id="displayFilter" onchange="filterContent()" class="form-input px-6 py-4" style="width: auto; min-width: 160px;">
+                        <option value="recent5">最近5筆</option>
+                        <option value="recent10">最近10筆</option>
+                        <option value="recent20">最近20筆</option>
+                        <option value="all">全部顯示</option>
+                        <option value="thisMonth">本月</option>
+                        <option value="lastMonth">上月</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- 新增日誌表單 -->
+        <div id="formContainer" class="hidden card">
+            <h2 id="formTitle" class="section-header">新增日誌</h2>
+            <div class="space-y-8">
+                <div class="template-section">
+                    <label class="block text-sm font-semibold mb-2" style="color: #8D6B61">🚀 快速範本</label>
+                    <div style="margin-bottom: 1rem;">
+                        <button type="button" class="template-btn" onclick="insertTemplate('routine')" id="routineBtn">例行工作</button>
+                        <button type="button" class="template-btn" onclick="insertTemplate('meeting')" id="meetingBtn">會議記錄</button>
+                        <button type="button" class="template-btn" onclick="insertTemplate('emergency')" id="emergencyBtn">緊急事件</button>
+                        <button type="button" class="template-btn" onclick="insertTemplate('health')" id="healthBtn">健康促進</button>
+                        <button type="button" class="template-btn" onclick="insertTemplate('training')" id="trainingBtn">教育訓練</button>
+                    </div>
+                    <div style="text-align: right;">
+                        <button type="button" onclick="showTemplateEditor()" style="background: #C39289; color: #F2EEED; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; font-size: 0.85rem; font-weight: 500;">
+                            ⚙️ 編輯範本
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-6 mb-8">
+                    <div>
+                        <label class="block text-lg font-semibold mb-3" style="color: #8D6B61">📅 日期</label>
+                        <input type="date" id="date" class="form-input" />
+                    </div>
+                    <div>
+                        <label class="block text-lg font-semibold mb-3" style="color: #8D6B61">🏷️ 標籤</label>
+                        <div class="tag-input-container" id="tagContainer">
+                            <input type="text" class="tag-input" id="tagInput" placeholder="輸入標籤後按Enter..." onkeypress="handleTagInput(event)">
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-lg font-semibold mb-3" style="color: #8D6B61">⚡ 主要工作內容</label>
+                    <textarea id="mainTasks" rows="5" class="form-input" placeholder="記錄今日主要完成的工作..."></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-lg font-semibold mb-3" style="color: #8D6B61">👨‍💼 主管指示事項</label>
+                        <textarea id="managementDirectives" rows="4" class="form-input" placeholder="記錄主管交辦的事項..."></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-lg font-semibold mb-3" style="color: #8D6B61">🚨 緊急事件處理</label>
+                        <textarea id="emergencyEvents" rows="4" class="form-input" placeholder="記錄緊急事件的處理過程..."></textarea>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-lg font-semibold mb-3" style="color: #8D6B61">💪 健康促進活動</label>
+                        <textarea id="healthPromotionActivities" rows="4" class="form-input" placeholder="記錄健康促進相關活動..."></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-lg font-semibold mb-3" style="color: #8D6B61">📝 其他備註</label>
+                        <textarea id="notes" rows="4" class="form-input" placeholder="其他需要記錄的事項..."></textarea>
+                    </div>
+                </div>
+                
+                <div class="flex gap-6 pt-8">
+                    <button onclick="saveEntry()" class="btn-primary">💾 儲存日誌</button>
+                    <button onclick="cancelForm()" class="btn-cancel">✖️ 取消</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 工作變更表單 -->
+        <div id="changeFormContainer" class="hidden card">
+            <h2 id="changeFormTitle" class="section-header" style="color: #DCC677; border-bottom-color: #DCC677;">新增工作變更記錄</h2>
+            <div class="space-y-8">
+                <div class="grid grid-cols-2 gap-6 mb-8">
+                    <div>
+                        <label class="block text-lg font-semibold mb-3" style="color: #DCC677">📅 變更日期</label>
+                        <input type="date" id="changeDate" class="form-input" />
+                    </div>
+                    <div>
+                        <label class="block text-lg font-semibold mb-3" style="color: #DCC677">🔄 變更類型</label>
+                        <select id="changeType" class="form-input">
+                            <option value="new">新增工作項目</option>
+                            <option value="modify">修改工作內容</option>
+                            <option value="remove">移除工作項目</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-lg font-semibold mb-3" style="color: #DCC677">📋 工作項目名稱</label>
+                    <input type="text" id="workItem" class="form-input" placeholder="例如：會議室安全巡檢、健康檢查流程、醫療用品管理..." />
+                </div>
+
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-lg font-semibold mb-3" style="color: #DCC677">📝 原本內容</label>
+                        <textarea id="originalContent" rows="4" class="form-input" placeholder="記錄原本的工作內容或執行頻率..."></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-lg font-semibold mb-3" style="color: #DCC677">🆕 變更後內容</label>
+                        <textarea id="newContent" rows="4" class="form-input" placeholder="記錄變更後的工作內容或執行頻率..."></textarea>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-lg font-semibold mb-3" style="color: #DCC677">👨‍💼 指示來源</label>
+                        <input type="text" id="changeSource" class="form-input" placeholder="例如：經理、法規..." />
+                    </div>
+                    <div>
+                        <label class="block text-lg font-semibold mb-3" style="color: #DCC677">🎯 變更原因</label>
+                        <textarea id="changeReason" rows="4" class="form-input" placeholder="記錄變更的原因或背景..."></textarea>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-lg font-semibold mb-3" style="color: #DCC677">📋 交接注意事項</label>
+                    <textarea id="handoverNotes" rows="3" class="form-input" placeholder="記錄未來交接時需要特別注意的事項..."></textarea>
+                </div>
+                
+                <div class="flex gap-6 pt-8">
+                    <button onclick="saveChange()" class="btn-change">💾 儲存變更記錄</button>
+                    <button onclick="cancelChangeForm()" class="btn-cancel">✖️ 取消</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 標籤頁 -->
+        <div class="card">
+            <div class="tab-container">
+                <button class="tab-btn active" onclick="showTab('journal')">📝 工作日誌</button>
+                <button class="tab-btn" onclick="showTab('changes')">🔄 工作變更記錄</button>
+            </div>
+
+            <!-- 工作日誌內容 -->
+            <div id="journalTab" class="tab-content active">
+                <div id="entriesList">
+                    <div id="noEntries" class="text-center" style="padding: 4rem 0;">
+                        <div style="font-size: 5rem; margin-bottom: 1.5rem; color: #E3E7EA;">📝</div>
+                        <p class="text-xl font-semibold" style="color: #8D6B61;">開始記錄您的工作日誌</p>
+                        <p style="color: #82898D; margin-top: 0.5rem;">點擊上方「新增日誌」按鈕開始記錄</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 工作變更記錄內容 -->
+            <div id="changesTab" class="tab-content">
+                <div id="changesList">
+                    <div id="noChanges" class="text-center" style="padding: 4rem 0;">
+                        <div style="font-size: 5rem; margin-bottom: 1.5rem; color: #DCC677;">🔄</div>
+                        <p class="text-xl font-semibold" style="color: #DCC677;">開始記錄工作變更</p>
+                        <p style="color: #82898D; margin-top: 0.5rem;">點擊上方「工作變更」按鈕開始記錄</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 待辦事項彈窗 -->
+    <div id="todoModal" class="modal-overlay hidden">
+        <div class="modal-content" style="max-width: 700px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h2 style="color: #A1B0AD; font-size: 1.8rem; font-weight: bold; margin: 0;">📝 待辦事項管理</h2>
+                <button class="close-btn" onclick="hideTodoModal()" style="color: #A1B0AD;">✖</button>
+            </div>
+            
+            <!-- 新增待辦事項 -->
+            <div style="background: #E3E7EA; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 2rem;">
+                <h3 style="color: #8D6B61; margin-bottom: 1rem; font-size: 1.1rem;">➕ 新增待辦事項</h3>
+                <div style="display: flex; gap: 1rem; align-items: end;">
+                    <div style="flex: 1;">
+                        <label style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: #8D6B61;">事項內容</label>
+                        <input type="text" id="todoInput" placeholder="請輸入待辦事項..." 
+                               style="width: 100%; padding: 0.75rem; border: 2px solid #C6CCC0; border-radius: 0.5rem; font-size: 1rem;"
+                               onkeypress="if(event.key==='Enter') addTodo()">
+                    </div>
+                    <div>
+                        <label style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: #8D6B61;">優先級</label>
+                        <select id="todoPriority" style="padding: 0.75rem; border: 2px solid #C6CCC0; border-radius: 0.5rem; font-size: 1rem;">
+                            <option value="high">🔴 高</option>
+                            <option value="normal" selected>🔵 中</option>
+                            <option value="low">⚪ 低</option>
+                        </select>
+                    </div>
+                    <button onclick="addTodo()" 
+                            style="background: #A1B0AD; color: #8D6B61; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                        新增
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 待辦事項統計 -->
+            <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                <div style="flex: 1; background: #C39289; color: white; padding: 1rem; border-radius: 0.5rem; text-align: center;">
+                    <div style="font-size: 1.5rem; font-weight: bold;" id="totalTodos">0</div>
+                    <div style="font-size: 0.9rem;">總計</div>
+                </div>
+                <div style="flex: 1; background: #27ae60; color: white; padding: 1rem; border-radius: 0.5rem; text-align: center;">
+                    <div style="font-size: 1.5rem; font-weight: bold;" id="completedTodos">0</div>
+                    <div style="font-size: 0.9rem;">已完成</div>
+                </div>
+                <div style="flex: 1; background: #e74c3c; color: white; padding: 1rem; border-radius: 0.5rem; text-align: center;">
+                    <div style="font-size: 1.5rem; font-weight: bold;" id="pendingTodos">0</div>
+                    <div style="font-size: 0.9rem;">待完成</div>
+                </div>
+            </div>
+            
+            <!-- 操作按鈕 -->
+            <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+                <button onclick="clearCompletedTodos()" 
+                        style="background: #27ae60; color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; font-size: 0.9rem; transition: all 0.3s ease;">
+                    ✅ 清除已完成
+                </button>
+                <button onclick="clearAllTodos()" 
+                        style="background: #e74c3c; color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; font-size: 0.9rem; transition: all 0.3s ease;">
+                    🗑️ 清除全部
+                </button>
+                <button onclick="clearPendingTodos()" 
+                        style="background: #f39c12; color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; font-size: 0.9rem; transition: all 0.3s ease;">
+                    ⏳ 清除未完成
+                </button>
+                <button onclick="selectDeleteMode()" 
+                        style="background: #9b59b6; color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; font-size: 0.9rem; transition: all 0.3s ease;">
+                    ☑️ 批量刪除
+                </button>
+            </div>
+            
+            <!-- 待辦事項列表 -->
+            <div style="max-height: 400px; overflow-y: auto; border: 1px solid #D6DCDB; border-radius: 0.5rem; padding: 1rem; background: white;">
+                <h3 style="color: #8D6B61; margin-bottom: 1rem; font-size: 1.1rem;">📋 待辦清單</h3>
+                <div id="todosList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 匯入資料彈窗 -->
+    <div id="importModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h2 style="color: #A1B0AD; font-size: 1.8rem; font-weight: bold; margin: 0;">📥 匯入資料</h2>
+                <button class="close-btn" onclick="hideImportModal()" style="color: #A1B0AD;">✖</button>
+            </div>
+            
+            <div style="margin-bottom: 2rem;">
+                <p style="color: #666; margin-bottom: 1rem;">選擇要匯入的檔案類型：</p>
+                
+                <div style="display: grid; gap: 1rem; margin-bottom: 2rem;">
+                    <div style="border: 2px dashed #A1B0AD; border-radius: 0.5rem; padding: 2rem; text-align: center;">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">📊</div>
+                        <h3 style="color: #A1B0AD; margin-bottom: 0.5rem;">Excel 檔案</h3>
+                        <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">匯入之前匯出的 Excel 檔案</p>
+                        <input type="file" id="excelFileInput" accept=".xlsx,.xls" style="display: none;" onchange="handleExcelImport(event)">
+                        <button onclick="document.getElementById('excelFileInput').click()" style="background: #A1B0AD; color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer;">選擇 Excel 檔案</button>
+                    </div>
+                    
+                    <div style="border: 2px dashed #C0B0A2; border-radius: 0.5rem; padding: 2rem; text-align: center;">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">📄</div>
+                        <h3 style="color: #C0B0A2; margin-bottom: 0.5rem;">JSON 檔案</h3>
+                        <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">匯入完整備份檔案（推薦）</p>
+                        <input type="file" id="jsonFileInput" accept=".json" style="display: none;" onchange="handleJsonImport(event)">
+                        <button onclick="document.getElementById('jsonFileInput').click()" style="background: #C0B0A2; color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer;">選擇 JSON 檔案</button>
+                    </div>
+                </div>
+                
+                <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 0.5rem; padding: 1rem;">
+                    <h4 style="color: #856404; margin: 0 0 0.5rem 0;">⚠️ 重要提醒</h4>
+                    <ul style="color: #856404; margin: 0; padding-left: 1.5rem; font-size: 0.9rem;">
+                        <li>匯入資料會覆蓋現有的所有記錄</li>
+                        <li>建議先匯出備份目前的資料</li>
+                        <li>JSON 格式能完整保留所有資料結構</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 範本編輯器彈跳視窗 -->
+    <div id="templateEditor" class="modal-overlay hidden">
+        <div class="modal-content" style="max-width: 800px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h2 style="color: #DCC677; font-size: 1.8rem; font-weight: bold; margin: 0;">⚙️ 範本編輯器</h2>
+                <button class="close-btn" onclick="hideTemplateEditor()" style="color: #DCC677;">✖</button>
+            </div>
+            
+            <div style="margin-bottom: 2rem;">
+                <p style="color: #666; margin-bottom: 1rem;">您可以自定義快速範本的內容，讓日誌記錄更符合您的工作習慣。</p>
+            </div>
+            
+            <div style="display: grid; gap: 2rem;">
+                <div>
+                    <label style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #8D6B61;">📋 範本1</label>
+                    <input type="text" id="routineName" class="form-input" placeholder="範本名稱..." style="margin-bottom: 0.5rem;">
+                    <textarea id="routineTemplate" rows="4" class="form-input" placeholder="輸入範本內容..."></textarea>
+                </div>
+                
+                <div>
+                    <label style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #8D6B61;">🤝 範本2</label>
+                    <input type="text" id="meetingName" class="form-input" placeholder="範本名稱..." style="margin-bottom: 0.5rem;">
+                    <textarea id="meetingTemplate" rows="4" class="form-input" placeholder="輸入範本內容..."></textarea>
+                </div>
+                
+                <div>
+                    <label style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #8D6B61;">🚨 範本3</label>
+                    <input type="text" id="emergencyName" class="form-input" placeholder="範本名稱..." style="margin-bottom: 0.5rem;">
+                    <textarea id="emergencyTemplate" rows="4" class="form-input" placeholder="輸入範本內容..."></textarea>
+                </div>
+                
+                <div>
+                    <label style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #8D6B61;">💪 範本4</label>
+                    <input type="text" id="healthName" class="form-input" placeholder="範本名稱..." style="margin-bottom: 0.5rem;">
+                    <textarea id="healthTemplate" rows="4" class="form-input" placeholder="輸入範本內容..."></textarea>
+                </div>
+                
+                <div>
+                    <label style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #8D6B61;">📚 範本5</label>
+                    <input type="text" id="trainingName" class="form-input" placeholder="範本名稱..." style="margin-bottom: 0.5rem;">
+                    <textarea id="trainingTemplate" rows="4" class="form-input" placeholder="輸入範本內容..."></textarea>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #E3E7EA;">
+                <button onclick="saveTemplates()" style="background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; border: none; padding: 1rem 2rem; border-radius: 0.75rem; font-weight: bold; cursor: pointer; transition: all 0.3s ease;">
+                    ✅ 儲存範本
+                </button>
+                <button onclick="resetTemplates()" style="background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; border: none; padding: 1rem 2rem; border-radius: 0.75rem; font-weight: bold; cursor: pointer; transition: all 0.3s ease;">
+                    🔄 重設為預設
+                </button>
+                <button onclick="hideTemplateEditor()" style="background: #82898D; color: white; border: none; padding: 1rem 2rem; border-radius: 0.75rem; font-weight: bold; cursor: pointer; transition: all 0.3s ease;">
+                    ❌ 取消
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全域變數
+        let entries = [];
+        let workChanges = [];
+        let editingId = null;
+        let editingChangeId = null;
+        let todos = [];
+        let todoIdCounter = 1;
+        let currentTags = [];
+        let currentTab = 'journal';
+        let supplies = [];
+
+        // 範本內容
+        let templates = {
+            routine: "✓ 例行健康檢查\n✓ 環境安全巡視\n✓ 醫療用品盤點\n✓ 文件記錄更新",
+            meeting: "會議主題：\n參與人員：\n重要決議：\n後續行動：",
+            emergency: "事件時間：\n事件地點：\n處理經過：\n後續追蹤：",
+            health: "活動名稱：\n參與人數：\n活動內容：\n成效評估：",
+            training: "訓練主題：\n講師：\n參與人員：\n重點內容：\n心得收穫："
+        };
+
+        let templateNames = {
+            routine: "例行工作",
+            meeting: "會議記錄", 
+            emergency: "緊急事件",
+            health: "健康促進",
+            training: "教育訓練"
+        };
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            loadTodos();
+            loadTemplates();
+            loadSupplies();
+            setDefaultDisplay();
+            displayContent();
+            updateTemplateButtons();
+        });
+
+        // 通知功能
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // 資料儲存與載入
+        function saveData() {
+            const data = {
+                entries: entries,
+                workChanges: workChanges,
+                todos: todos,
+                todoIdCounter: todoIdCounter,
+                supplies: supplies,
+                templates: templates,
+                templateNames: templateNames
+            };
+            localStorage.setItem('nursingJournalData', JSON.stringify(data));
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('nursingJournalData');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    entries = data.entries || [];
+                    workChanges = data.workChanges || [];
+                    todos = data.todos || [];
+                    todoIdCounter = data.todoIdCounter || 1;
+                    supplies = data.supplies || [];
+                    if (data.templates) templates = data.templates;
+                    if (data.templateNames) templateNames = data.templateNames;
+                    
+                    // 確保舊的待辦事項有優先級
+                    todos.forEach(todo => {
+                        if (!todo.priority) todo.priority = 'normal';
+                    });
+                    
+                } catch (e) {
+                    console.error('載入資料時發生錯誤:', e);
+                }
+            }
+        }
+
+        function loadTodos() {
+            // 待辦事項功能（暫時空實作）
+        }
+
+        function loadTemplates() {
+            // 載入範本設定已在 loadData 中處理
+        }
+
+        function loadSupplies() {
+            // 耗材管理功能（暫時空實作）
+        }
+
+        function setDefaultDisplay() {
+            document.getElementById('displayFilter').value = 'recent5';
+        }
+
+        // 日誌功能
+        function showAddForm() {
+            editingId = null;
+            document.getElementById('formTitle').textContent = '新增日誌';
+            document.getElementById('formContainer').classList.remove('hidden');
+            document.getElementById('changeFormContainer').classList.add('hidden');
+            resetForm();
+            setDefaultDate();
+        }
+
+        function setDefaultDate() {
+            if (!editingId) {
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('date').value = today;
+            }
+        }
+
+        function resetForm() {
+            ['date', 'mainTasks', 'managementDirectives', 'emergencyEvents', 'healthPromotionActivities', 'notes'].forEach(field => {
+                document.getElementById(field).value = '';
+            });
+            currentTags = [];
+            updateTagDisplay();
+        }
+
+        function cancelForm() {
+            document.getElementById('formContainer').classList.add('hidden');
+            editingId = null;
+        }
+
+        function saveEntry() {
+            const date = document.getElementById('date').value;
+            const mainTasks = document.getElementById('mainTasks').value;
+
+            if (!date) {
+                showNotification('請填寫日期', 'warning');
+                return;
+            }
+
+            const entry = {
+                id: editingId || Date.now(),
+                date: date,
+                mainTasks: mainTasks,
+                managementDirectives: document.getElementById('managementDirectives').value,
+                emergencyEvents: document.getElementById('emergencyEvents').value,
+                healthPromotionActivities: document.getElementById('healthPromotionActivities').value,
+                notes: document.getElementById('notes').value,
+                tags: [...currentTags],
+                createdAt: editingId ? entries.find(e => e.id === editingId)?.createdAt : new Date().toISOString()
+            };
+
+            if (editingId) {
+                const index = entries.findIndex(e => e.id === editingId);
+                if (index !== -1) entries[index] = entry;
+            } else {
+                entries.unshift(entry);
+            }
+
+            entries.sort((a, b) => new Date(b.date) - new Date(a.date));
+            saveData();
+            displayContent();
+            cancelForm();
+            showNotification('✅ 日誌已儲存', 'success');
+        }
+
+        function editEntry(id) {
+            const entry = entries.find(e => e.id === id);
+            if (!entry) return;
+            
+            editingId = id;
+            document.getElementById('formTitle').textContent = '編輯日誌';
+            
+            document.getElementById('date').value = entry.date;
+            document.getElementById('mainTasks').value = entry.mainTasks;
+            document.getElementById('managementDirectives').value = entry.managementDirectives || '';
+            document.getElementById('emergencyEvents').value = entry.emergencyEvents || '';
+            document.getElementById('healthPromotionActivities').value = entry.healthPromotionActivities || '';
+            document.getElementById('notes').value = entry.notes || '';
+            
+            currentTags = entry.tags || [];
+            updateTagDisplay();
+            document.getElementById('formContainer').classList.remove('hidden');
+            document.getElementById('changeFormContainer').classList.add('hidden');
+        }
+
+        function deleteEntry(id) { 
+            if (confirm('確定要刪除這筆記錄嗎？此操作無法復原。')) {
+                entries = entries.filter(e => e.id !== id);
+                saveData();
+                displayContent();
+                showNotification('✅ 記錄已刪除', 'success');
+            }
+        }
+
+        // 工作變更功能
+        function showChangeForm() {
+            editingChangeId = null;
+            document.getElementById('changeFormTitle').textContent = '新增工作變更記錄';
+            document.getElementById('changeFormContainer').classList.remove('hidden');
+            document.getElementById('formContainer').classList.add('hidden');
+            resetChangeForm();
+            setDefaultChangeDate();
+        }
+
+        function setDefaultChangeDate() {
+            if (!editingChangeId) {
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('changeDate').value = today;
+            }
+        }
+
+        function resetChangeForm() {
+            ['changeDate', 'workItem', 'originalContent', 'newContent', 'changeSource', 'changeReason', 'handoverNotes'].forEach(field => {
+                document.getElementById(field).value = '';
+            });
+            document.getElementById('changeType').value = 'new';
+        }
+
+        function cancelChangeForm() {
+            document.getElementById('changeFormContainer').classList.add('hidden');
+            editingChangeId = null;
+        }
+
+        function saveChange() {
+            const changeDate = document.getElementById('changeDate').value;
+            const workItem = document.getElementById('workItem').value;
+            const changeType = document.getElementById('changeType').value;
+
+            if (!changeDate || !workItem) {
+                showNotification('請填寫變更日期和工作項目名稱', 'warning');
+                return;
+            }
+
+            const change = {
+                id: editingChangeId || Date.now(),
+                date: changeDate,
+                workItem: workItem,
+                changeType: changeType,
+                originalContent: document.getElementById('originalContent').value,
+                newContent: document.getElementById('newContent').value,
+                changeSource: document.getElementById('changeSource').value,
+                changeReason: document.getElementById('changeReason').value,
+                handoverNotes: document.getElementById('handoverNotes').value,
+                createdAt: editingChangeId ? workChanges.find(c => c.id === editingChangeId)?.createdAt : new Date().toISOString()
+            };
+
+            if (editingChangeId) {
+                const index = workChanges.findIndex(c => c.id === editingChangeId);
+                if (index !== -1) workChanges[index] = change;
+            } else {
+                workChanges.unshift(change);
+            }
+
+            workChanges.sort((a, b) => new Date(b.date) - new Date(a.date));
+            saveData();
+            displayContent();
+            cancelChangeForm();
+            showNotification('✅ 變更記錄已儲存', 'success');
+        }
+
+        function editChange(id) {
+            const change = workChanges.find(c => c.id === id);
+            if (!change) return;
+            
+            editingChangeId = id;
+            document.getElementById('changeFormTitle').textContent = '編輯工作變更記錄';
+            
+            document.getElementById('changeDate').value = change.date;
+            document.getElementById('workItem').value = change.workItem;
+            document.getElementById('changeType').value = change.changeType;
+            document.getElementById('originalContent').value = change.originalContent || '';
+            document.getElementById('newContent').value = change.newContent || '';
+            document.getElementById('changeSource').value = change.changeSource || '';
+            document.getElementById('changeReason').value = change.changeReason || '';
+            document.getElementById('handoverNotes').value = change.handoverNotes || '';
+            
+            document.getElementById('changeFormContainer').classList.remove('hidden');
+            document.getElementById('formContainer').classList.add('hidden');
+        }
+
+        function deleteChange(id) {
+            if (confirm('確定要刪除這筆變更記錄嗎？此操作無法復原。')) {
+                workChanges = workChanges.filter(c => c.id !== id);
+                saveData();
+                displayContent();
+                showNotification('✅ 變更記錄已刪除', 'success');
+            }
+        }
+
+        // 顯示內容
+        function displayContent() {
+            if (currentTab === 'journal') {
+                displayEntries();
+            } else if (currentTab === 'changes') {
+                displayChanges();
+            }
+        }
+
+        function displayEntries() {
+            const filteredEntries = getFilteredData(entries);
+            const container = document.getElementById('entriesList');
+            container.innerHTML = '';
+
+            if (filteredEntries.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center" style="padding: 4rem 0;">
+                        <div style="font-size: 5rem; margin-bottom: 1.5rem; color: #E3E7EA;">📝</div>
+                        <p class="text-xl font-semibold" style="color: #8D6B61;">開始記錄您的工作日誌</p>
+                        <p style="color: #82898D; margin-top: 0.5rem;">點擊上方「新增日誌」按鈕開始記錄</p>
+                    </div>
+                `;
+                return;
+            }
+
+            filteredEntries.forEach(entry => {
+                const entryDiv = document.createElement('div');
+                entryDiv.className = 'entry-card';
+                
+                const tagsHtml = entry.tags && entry.tags.length > 0 ? 
+                    `<div style="margin-top: 0.5rem;">
+                        ${entry.tags.map(tag => `<span style="background: #C39289; color: white; padding: 0.25rem 0.5rem; border-radius: 0.5rem; font-size: 0.75rem; margin-right: 0.5rem;">${escapeHtml(tag)}</span>`).join('')}
+                    </div>` : '';
+                
+                entryDiv.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem;">
+                        <div>
+                            <h3 style="font-size: 1.5rem; font-weight: bold; color: #8D6B61;">${formatDate(entry.date)}</h3>
+                            ${tagsHtml}
+                        </div>
+                        <div style="display: flex; gap: 0.75rem;">
+                            <button class="icon-btn edit-btn" title="編輯日誌" onclick="editEntry(${entry.id})">✏️</button>
+                            <button class="icon-btn delete-btn" title="刪除日誌" onclick="deleteEntry(${entry.id})">🗑️</button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-6">
+                        ${entry.mainTasks ? createFieldSection(entry.mainTasks, '⚡ 主要工作內容', 'col-span-2') : ''}
+                        ${createFieldSection(entry.managementDirectives, '👨‍💼 主管指示事項')}
+                        ${createFieldSection(entry.emergencyEvents, '🚨 緊急事件處理')}
+                        ${createFieldSection(entry.healthPromotionActivities, '💪 健康促進活動')}
+                        ${createFieldSection(entry.notes, '📝 其他備註')}
+                    </div>
+                `;
+                container.appendChild(entryDiv);
+            });
+        }
+
+        function displayChanges() {
+            const filteredChanges = getFilteredData(workChanges);
+            const container = document.getElementById('changesList');
+            container.innerHTML = '';
+
+            if (filteredChanges.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center" style="padding: 4rem 0;">
+                        <div style="font-size: 5rem; margin-bottom: 1.5rem; color: #DCC677;">🔄</div>
+                        <p class="text-xl font-semibold" style="color: #DCC677;">開始記錄工作變更</p>
+                        <p style="color: #82898D; margin-top: 0.5rem;">點擊上方「工作變更」按鈕開始記錄</p>
+                    </div>
+                `;
+                return;
+            }
+
+            filteredChanges.forEach(change => {
+                const changeDiv = document.createElement('div');
+                changeDiv.className = 'change-card';
+                
+                const typeText = {
+                    'new': '新增工作項目',
+                    'modify': '修改工作內容', 
+                    'remove': '移除工作項目'
+                };
+
+                const typeBadge = `<span class="change-type-badge change-type-${change.changeType}">${typeText[change.changeType]}</span>`;
+                
+                changeDiv.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem;">
+                        <div>
+                            <h3 style="font-size: 1.5rem; font-weight: bold; color: #DCC677;">${formatDate(change.date)}</h3>
+                            ${typeBadge}
+                            <h4 style="font-size: 1.25rem; font-weight: 600; color: #333; margin-top: 0.5rem;">${escapeHtml(change.workItem)}</h4>
+                        </div>
+                        <div style="display: flex; gap: 0.75rem;">
+                            <button class="icon-btn edit-btn" title="編輯變更記錄" onclick="editChange(${change.id})">✏️</button>
+                            <button class="icon-btn delete-btn" title="刪除變更記錄" onclick="deleteChange(${change.id})">🗑️</button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-6">
+                        ${createFieldSection(change.originalContent, '📝 原本內容')}
+                        ${createFieldSection(change.newContent, '🆕 變更後內容')}
+                        ${createFieldSection(change.changeSource, '👨‍💼 指示來源')}
+                        ${createFieldSection(change.changeReason, '🎯 變更原因')}
+                        ${change.handoverNotes ? createFieldSection(change.handoverNotes, '📋 交接注意事項', 'col-span-2') : ''}
+                    </div>
+                `;
+                container.appendChild(changeDiv);
+            });
+        }
+
+        function createFieldSection(content, title, className = '') {
+            if (!content) return '';
+            
+            const headerClass = className === 'col-span-2' ? 
+                'font-weight: bold; font-size: 1.125rem; margin-bottom: 0.75rem; color: #8D6B61; border-bottom: 2px solid #82898D; padding-bottom: 0.5rem;' :
+                'font-weight: 600; margin-bottom: 0.75rem; color: #8D6B61;';
+            
+            return `
+                <div ${className ? `class="${className}"` : ''}>
+                    <h4 style="${headerClass}">${title}</h4>
+                    <div class="tag">
+                        <p style="line-height: 1.6; white-space: pre-wrap; color: #2c3e50; font-weight: 500;">${escapeHtml(content)}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function getFilteredData(data) {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const displayValue = document.getElementById('displayFilter').value;
+            
+            let filtered = data.filter(item => {
+                return Object.values(item).some(value => 
+                    String(value).toLowerCase().includes(searchTerm)
+                );
+            });
+
+            const currentDate = new Date();
+            const currentMonth = currentDate.toISOString().slice(0, 7);
+            const lastMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1).toISOString().slice(0, 7);
+
+            switch(displayValue) {
+                case 'recent5': return filtered.slice(0, 5);
+                case 'recent10': return filtered.slice(0, 10);
+                case 'recent20': return filtered.slice(0, 20);
+                case 'all': return filtered;
+                case 'thisMonth': return filtered.filter(item => item.date.startsWith(currentMonth));
+                case 'lastMonth': return filtered.filter(item => item.date.startsWith(lastMonth));
+                default: return filtered.slice(0, 5);
+            }
+        }
+
+        function filterContent() {
+            displayContent();
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+            return `${dateString} (${weekdays[date.getDay()]})`;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 標籤頁切換
+        function showTab(tabName) {
+            currentTab = tabName;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[onclick="showTab('${tabName}')"]`).classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            displayContent();
+        }
+
+        // 標籤功能
+        function handleTagInput(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                const tagInput = document.getElementById('tagInput');
+                const tagText = tagInput.value.trim();
+                
+                if (tagText && !currentTags.includes(tagText)) {
+                    currentTags.push(tagText);
+                    updateTagDisplay();
+                    tagInput.value = '';
+                }
+            }
+        }
+
+        function removeTag(tagToRemove) {
+            currentTags = currentTags.filter(tag => tag !== tagToRemove);
+            updateTagDisplay();
+        }
+
+        function updateTagDisplay() {
+            const container = document.getElementById('tagContainer');
+            const tagInput = document.getElementById('tagInput');
+            
+            const existingTags = container.querySelectorAll('.tag-item');
+            existingTags.forEach(tag => tag.remove());
+            
+            currentTags.forEach(tag => {
+                const tagElement = document.createElement('span');
+                tagElement.className = 'tag-item';
+                tagElement.innerHTML = `
+                    ${escapeHtml(tag)}
+                    <button type="button" class="tag-remove" onclick="removeTag('${tag}')">×</button>
+                `;
+                container.insertBefore(tagElement, tagInput);
+            });
+        }
+
+        // 範本功能
+        function insertTemplate(templateType) {
+            if (templates[templateType]) {
+                const mainTasksField = document.getElementById('mainTasks');
+                const currentContent = mainTasksField.value;
+                const newContent = currentContent ? currentContent + '\n\n' + templates[templateType] : templates[templateType];
+                mainTasksField.value = newContent;
+                mainTasksField.focus();
+            }
+        }
+
+        function showTemplateEditor() {
+            document.getElementById('templateEditor').classList.remove('hidden');
+            loadTemplateEditor();
+        }
+
+        function hideTemplateEditor() {
+            document.getElementById('templateEditor').classList.add('hidden');
+        }
+
+        function loadTemplateEditor() {
+            document.getElementById('routineName').value = templateNames.routine || '';
+            document.getElementById('meetingName').value = templateNames.meeting || '';
+            document.getElementById('emergencyName').value = templateNames.emergency || '';
+            document.getElementById('healthName').value = templateNames.health || '';
+            document.getElementById('trainingName').value = templateNames.training || '';
+            
+            document.getElementById('routineTemplate').value = templates.routine || '';
+            document.getElementById('meetingTemplate').value = templates.meeting || '';
+            document.getElementById('emergencyTemplate').value = templates.emergency || '';
+            document.getElementById('healthTemplate').value = templates.health || '';
+            document.getElementById('trainingTemplate').value = templates.training || '';
+        }
+
+        function saveTemplates() {
+            templateNames.routine = document.getElementById('routineName').value || '範本1';
+            templateNames.meeting = document.getElementById('meetingName').value || '範本2';
+            templateNames.emergency = document.getElementById('emergencyName').value || '範本3';
+            templateNames.health = document.getElementById('healthName').value || '範本4';
+            templateNames.training = document.getElementById('trainingName').value || '範本5';
+            
+            templates.routine = document.getElementById('routineTemplate').value;
+            templates.meeting = document.getElementById('meetingTemplate').value;
+            templates.emergency = document.getElementById('emergencyTemplate').value;
+            templates.health = document.getElementById('healthTemplate').value;
+            templates.training = document.getElementById('trainingTemplate').value;
+            
+            updateTemplateButtons();
+            saveData();
+            hideTemplateEditor();
+            showNotification('✅ 範本已儲存', 'success');
+        }
+
+        function resetTemplates() {
+            if (confirm('確定要重設為預設範本嗎？這將會覆蓋您目前的自訂範本。')) {
+                templateNames = {
+                    routine: "例行工作",
+                    meeting: "會議記錄", 
+                    emergency: "緊急事件",
+                    health: "健康促進",
+                    training: "教育訓練"
+                };
+                
+                templates = {
+                    routine: "✓ 例行健康檢查\n✓ 環境安全巡視\n✓ 醫療用品盤點\n✓ 文件記錄更新",
+                    meeting: "會議主題：\n參與人員：\n重要決議：\n後續行動：",
+                    emergency: "事件時間：\n事件地點：\n處理經過：\n後續追蹤：",
+                    health: "活動名稱：\n參與人數：\n活動內容：\n成效評估：",
+                    training: "訓練主題：\n講師：\n參與人員：\n重點內容：\n心得收穫："
+                };
+                
+                loadTemplateEditor();
+                updateTemplateButtons();
+                saveData();
+                showNotification('✅ 範本已重設為預設值', 'success');
+            }
+        }
+
+        function updateTemplateButtons() {
+            document.getElementById('routineBtn').textContent = templateNames.routine;
+            document.getElementById('meetingBtn').textContent = templateNames.meeting;
+            document.getElementById('emergencyBtn').textContent = templateNames.emergency;
+            document.getElementById('healthBtn').textContent = templateNames.health;
+            document.getElementById('trainingBtn').textContent = templateNames.training;
+        }
+
+        // 匯出功能
+        function exportData() {
+            try {
+                // 建立工作簿
+                const wb = XLSX.utils.book_new();
+                
+                // 匯出日誌資料
+                if (entries.length > 0) {
+                    const journalData = entries.map(entry => ({
+                        '日期': entry.date,
+                        '主要工作內容': entry.mainTasks || '',
+                        '主管指示事項': entry.managementDirectives || '',
+                        '緊急事件處理': entry.emergencyEvents || '',
+                        '健康促進活動': entry.healthPromotionActivities || '',
+                        '其他備註': entry.notes || '',
+                        '標籤': (entry.tags || []).join(', '),
+                        '建立時間': entry.createdAt || ''
+                    }));
+                    const ws1 = XLSX.utils.json_to_sheet(journalData);
+                    XLSX.utils.book_append_sheet(wb, ws1, '工作日誌');
+                }
+                
+                // 匯出變更記錄
+                if (workChanges.length > 0) {
+                    const changesData = workChanges.map(change => ({
+                        '變更日期': change.date,
+                        '變更類型': change.changeType === 'new' ? '新增工作項目' : 
+                                   change.changeType === 'modify' ? '修改工作內容' : '移除工作項目',
+                        '工作項目名稱': change.workItem || '',
+                        '原本內容': change.originalContent || '',
+                        '變更後內容': change.newContent || '',
+                        '指示來源': change.changeSource || '',
+                        '變更原因': change.changeReason || '',
+                        '交接注意事項': change.handoverNotes || '',
+                        '建立時間': change.createdAt || ''
+                    }));
+                    const ws2 = XLSX.utils.json_to_sheet(changesData);
+                    XLSX.utils.book_append_sheet(wb, ws2, '工作變更記錄');
+                }
+                
+                // 匯出待辦事項
+                if (todos.length > 0) {
+                    const todoData = todos.map(todo => ({
+                        '待辦事項': todo.text || '',
+                        '優先級': todo.priority === 'high' ? '高' : todo.priority === 'low' ? '低' : '中',
+                        '狀態': todo.completed ? '已完成' : '未完成',
+                        '建立時間': todo.createdAt || '',
+                        '完成時間': todo.completedAt || ''
+                    }));
+                    const ws3 = XLSX.utils.json_to_sheet(todoData);
+                    XLSX.utils.book_append_sheet(wb, ws3, '待辦事項');
+                }
+                
+                // 生成檔案名稱
+                const today = new Date().toISOString().split('T')[0];
+                const filename = `職護工作日誌_${today}.xlsx`;
+                
+                // 下載檔案
+                XLSX.writeFile(wb, filename);
+                showNotification('✅ Excel 檔案已匯出', 'success');
+                
+                // 同時匯出 JSON 備份
+                exportJsonBackup();
+                
+            } catch (error) {
+                console.error('匯出失敗:', error);
+                showNotification('❌ 匯出失敗，請重試', 'error');
+            }
+        }
+
+        function exportJsonBackup() {
+            const backupData = {
+                entries: entries,
+                workChanges: workChanges,
+                todos: todos,
+                supplies: supplies,
+                templates: templates,
+                templateNames: templateNames,
+                exportDate: new Date().toISOString(),
+                version: '1.0'
+            };
+            
+            const dataStr = JSON.stringify(backupData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            const today = new Date().toISOString().split('T')[0];
+            link.download = `職護工作日誌_完整備份_${today}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // 匯入功能
+        function showImportModal() {
+            const modal = document.getElementById('importModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+            } else {
+                showNotification('匯入功能載入失敗', 'error');
+            }
+        }
+
+        function hideImportModal() {
+            const modal = document.getElementById('importModal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+            
+            // 重置檔案輸入 - 加入安全檢查
+            const excelInput = document.getElementById('excelFileInput');
+            const jsonInput = document.getElementById('jsonFileInput');
+            
+            if (excelInput) excelInput.value = '';
+            if (jsonInput) jsonInput.value = '';
+        }
+
+        function handleExcelImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (!confirm('匯入資料會覆蓋現有的所有記錄，確定要繼續嗎？建議先匯出備份。')) {
+                event.target.value = '';
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    
+                    // 重置資料
+                    entries = [];
+                    workChanges = [];
+                    todos = [];
+                    
+                    // 匯入工作日誌
+                    if (workbook.SheetNames.includes('工作日誌')) {
+                        const worksheet = workbook.Sheets['工作日誌'];
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                        
+                        entries = jsonData.map((row, index) => ({
+                            id: Date.now() + index,
+                            date: row['日期'] || '',
+                            mainTasks: row['主要工作內容'] || '',
+                            managementDirectives: row['主管指示事項'] || '',
+                            emergencyEvents: row['緊急事件處理'] || '',
+                            healthPromotionActivities: row['健康促進活動'] || '',
+                            notes: row['其他備註'] || '',
+                            tags: row['標籤'] ? row['標籤'].split(', ').filter(tag => tag.trim()) : [],
+                            createdAt: row['建立時間'] || new Date().toISOString()
+                        }));
+                    }
+                    
+                    // 匯入工作變更記錄
+                    if (workbook.SheetNames.includes('工作變更記錄')) {
+                        const worksheet = workbook.Sheets['工作變更記錄'];
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                        
+                        workChanges = jsonData.map((row, index) => ({
+                            id: Date.now() + index + 10000,
+                            date: row['變更日期'] || '',
+                            changeType: row['變更類型'] === '新增工作項目' ? 'new' :
+                                       row['變更類型'] === '修改工作內容' ? 'modify' : 'remove',
+                            workItem: row['工作項目名稱'] || '',
+                            originalContent: row['原本內容'] || '',
+                            newContent: row['變更後內容'] || '',
+                            changeSource: row['指示來源'] || '',
+                            changeReason: row['變更原因'] || '',
+                            handoverNotes: row['交接注意事項'] || '',
+                            createdAt: row['建立時間'] || new Date().toISOString()
+                        }));
+                    }
+                    
+                    // 匯入待辦事項
+                    if (workbook.SheetNames.includes('待辦事項')) {
+                        const worksheet = workbook.Sheets['待辦事項'];
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                        
+                        todos = jsonData.map((row, index) => ({
+                            id: Date.now() + index + 20000,
+                            text: row['待辦事項'] || '',
+                            priority: row['優先級'] === '高' ? 'high' : row['優先級'] === '低' ? 'low' : 'normal',
+                            completed: row['狀態'] === '已完成',
+                            createdAt: row['建立時間'] || new Date().toISOString(),
+                            completedAt: row['完成時間'] || null
+                        }));
+                    }
+                    
+                    // 儲存資料並更新顯示
+                    saveData();
+                    displayContent();
+                    hideImportModal();
+                    showNotification('✅ Excel 資料匯入成功', 'success');
+                    
+                } catch (error) {
+                    console.error('Excel 匯入失敗:', error);
+                    showNotification('❌ Excel 匯入失敗，請檢查檔案格式', 'error');
+                }
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+
+        function handleJsonImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (!confirm('匯入資料會覆蓋現有的所有記錄，確定要繼續嗎？建議先匯出備份。')) {
+                event.target.value = '';
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const backupData = JSON.parse(e.target.result);
+                    
+                    // 驗證資料格式
+                    if (!backupData || typeof backupData !== 'object') {
+                        throw new Error('無效的備份檔案格式');
+                    }
+                    
+                    // 匯入資料
+                    entries = backupData.entries || [];
+                    workChanges = backupData.workChanges || [];
+                    todos = backupData.todos || [];
+                    supplies = backupData.supplies || [];
+                    
+                    if (backupData.templates) {
+                        templates = backupData.templates;
+                    }
+                    if (backupData.templateNames) {
+                        templateNames = backupData.templateNames;
+                    }
+                    
+                    // 儲存資料並更新顯示
+                    saveData();
+                    displayContent();
+                    updateTemplateButtons();
+                    hideImportModal();
+                    showNotification('✅ JSON 備份檔案匯入成功', 'success');
+                    
+                } catch (error) {
+                    console.error('JSON 匯入失敗:', error);
+                    showNotification('❌ JSON 匯入失敗，請檢查檔案格式', 'error');
+                }
+            };
+            
+            reader.readAsText(file);
+        }
+
+        // 待辦事項功能
+        function showTodoModal() {
+            const modal = document.getElementById('todoModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                displayTodos();
+            } else {
+                console.error('todoModal element not found');
+                showNotification('待辦事項功能載入失敗', 'error');
+            }
+        }
+
+        function hideTodoModal() {
+            const modal = document.getElementById('todoModal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function addTodo() {
+            const todoInput = document.getElementById('todoInput');
+            const todoPriority = document.getElementById('todoPriority');
+            
+            if (!todoInput || !todoPriority) {
+                showNotification('待辦事項輸入框載入失敗', 'error');
+                return;
+            }
+            
+            const todoText = todoInput.value.trim();
+            
+            if (!todoText) {
+                showNotification('請輸入待辦事項內容', 'warning');
+                return;
+            }
+            
+            const newTodo = {
+                id: todoIdCounter++,
+                text: todoText,
+                completed: false,
+                createdAt: new Date().toISOString(),
+                priority: todoPriority.value
+            };
+            
+            todos.unshift(newTodo);
+            todoInput.value = '';
+            todoPriority.value = 'normal';
+            
+            saveData();
+            displayTodos();
+            showNotification('✅ 待辦事項已新增', 'success');
+        }
+
+        function toggleTodo(id) {
+            const todo = todos.find(t => t.id === id);
+            if (todo) {
+                todo.completed = !todo.completed;
+                todo.completedAt = todo.completed ? new Date().toISOString() : null;
+                saveData();
+                displayTodos();
+            }
+        }
+
+        function deleteTodo(id) {
+            if (confirm('確定要刪除這個待辦事項嗎？')) {
+                todos = todos.filter(t => t.id !== id);
+                saveData();
+                displayTodos();
+                showNotification('✅ 待辦事項已刪除', 'success');
+            }
+        }
+
+        function editTodo(id) {
+            const todo = todos.find(t => t.id === id);
+            if (!todo) return;
+            
+            const newText = prompt('修改待辦事項：', todo.text);
+            if (newText && newText.trim() !== todo.text) {
+                todo.text = newText.trim();
+                saveData();
+                displayTodos();
+                showNotification('✅ 待辦事項已更新', 'success');
+            }
+        }
+
+        function displayTodos() {
+            const container = document.getElementById('todosList');
+            
+            if (!container) {
+                console.error('todosList container not found');
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            // 更新統計資訊 - 加入安全檢查
+            const totalCount = todos.length;
+            const completedCount = todos.filter(t => t.completed).length;
+            const pendingCount = totalCount - completedCount;
+            
+            const totalElement = document.getElementById('totalTodos');
+            const completedElement = document.getElementById('completedTodos');
+            const pendingElement = document.getElementById('pendingTodos');
+            
+            if (totalElement) totalElement.textContent = totalCount;
+            if (completedElement) completedElement.textContent = completedCount;
+            if (pendingElement) pendingElement.textContent = pendingCount;
+            
+            // 批量刪除模式的控制面板
+            if (isSelectMode && todos.length > 0) {
+                const controlPanel = document.createElement('div');
+                controlPanel.style.cssText = `
+                    background: #f8f9fa;
+                    border: 2px solid #9b59b6;
+                    border-radius: 0.5rem;
+                    padding: 1rem;
+                    margin-bottom: 1rem;
+                    display: flex;
+                    gap: 1rem;
+                    align-items: center;
+                    justify-content: space-between;
+                `;
+                
+                controlPanel.innerHTML = `
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <span style="color: #9b59b6; font-weight: bold;">📋 批量刪除模式</span>
+                        <span style="color: #666; font-size: 0.9rem;">已選擇: ${selectedTodos.size} 項</span>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button onclick="selectAllTodos()" 
+                                style="background: #3498db; color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.3rem; cursor: pointer; font-size: 0.8rem;">
+                            ${selectedTodos.size === todos.length ? '取消全選' : '全選'}
+                        </button>
+                        <button onclick="deleteSelectedTodos()" 
+                                style="background: #e74c3c; color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.3rem; cursor: pointer; font-size: 0.8rem;">
+                            刪除選中
+                        </button>
+                        <button onclick="selectDeleteMode()" 
+                                style="background: #95a5a6; color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.3rem; cursor: pointer; font-size: 0.8rem;">
+                            退出模式
+                        </button>
+                    </div>
+                `;
+                
+                container.appendChild(controlPanel);
+            }
+            
+            if (todos.length === 0) {
+                container.innerHTML += `
+                    <div class="text-center" style="padding: 2rem 0; color: #82898D;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">📝</div>
+                        <p>還沒有待辦事項</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const sortedTodos = [...todos].sort((a, b) => {
+                if (a.completed !== b.completed) {
+                    return a.completed ? 1 : -1;
+                }
+                const priorityOrder = { high: 0, normal: 1, low: 2 };
+                return priorityOrder[a.priority || 'normal'] - priorityOrder[b.priority || 'normal'];
+            });
+            
+            sortedTodos.forEach(todo => {
+                const todoDiv = document.createElement('div');
+                todoDiv.className = 'todo-item';
+                
+                const isSelected = selectedTodos.has(todo.id);
+                const bgColor = isSelected ? '#ffebee' : (todo.completed ? '#E3E7EA' : '#F2EEED');
+                const borderColor = isSelected ? '#e74c3c' : '#D6DCDB';
+                
+                todoDiv.style.cssText = `
+                    display: flex;
+                    align-items: center;
+                    gap: 1rem;
+                    padding: 1rem;
+                    margin-bottom: 0.5rem;
+                    background: ${bgColor};
+                    border: 1px solid ${borderColor};
+                    border-radius: 0.5rem;
+                    transition: all 0.3s ease;
+                    opacity: ${todo.completed ? '0.7' : '1'};
+                    cursor: ${isSelectMode ? 'pointer' : 'default'};
+                `;
+                
+                if (isSelectMode) {
+                    todoDiv.onclick = (e) => toggleSelectTodo(todo.id, e);
+                }
+                
+                const priorityColor = {
+                    high: '#e74c3c',
+                    normal: '#3498db',
+                    low: '#95a5a6'
+                };
+                
+                const priorityText = {
+                    high: '高',
+                    normal: '中',
+                    low: '低'
+                };
+                
+                const priority = todo.priority || 'normal';
+                
+                const selectCheckbox = isSelectMode ? `
+                    <div style="display: flex; align-items: center;">
+                        <input type="checkbox" 
+                               ${isSelected ? 'checked' : ''}
+                               style="width: 1.2rem; height: 1.2rem; cursor: pointer; margin-right: 0.5rem;"
+                               onclick="toggleSelectTodo(${todo.id}, event)">
+                    </div>
+                ` : '';
+                
+                const normalCheckbox = !isSelectMode ? `
+                    <input type="checkbox" 
+                           ${todo.completed ? 'checked' : ''} 
+                           onchange="toggleTodo(${todo.id})"
+                           style="width: 1.2rem; height: 1.2rem; cursor: pointer;">
+                ` : '';
+                
+                todoDiv.innerHTML = `
+                    ${selectCheckbox}
+                    ${normalCheckbox}
+                    <div style="flex: 1;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                            <span style="background: ${priorityColor[priority]}; color: white; padding: 0.2rem 0.5rem; border-radius: 0.3rem; font-size: 0.75rem; font-weight: bold;">
+                                ${priorityText[priority]}
+                            </span>
+                            <span style="font-size: 0.8rem; color: #666;">
+                                ${formatDateTime(todo.createdAt)}
+                            </span>
+                        </div>
+                        <p style="margin: 0; font-weight: 500; color: #333; text-decoration: ${todo.completed ? 'line-through' : 'none'};">
+                            ${escapeHtml(todo.text)}
+                        </p>
+                        ${todo.completed && todo.completedAt ? `<small style="color: #666;">完成於：${formatDateTime(todo.completedAt)}</small>` : ''}
+                    </div>
+                    ${!isSelectMode ? `
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button onclick="editTodo(${todo.id})" 
+                                style="background: #A1B0AD; color: #8D6B61; border: none; padding: 0.5rem; border-radius: 0.3rem; cursor: pointer; font-size: 0.8rem;">
+                            ✏️
+                        </button>
+                        <button onclick="deleteTodo(${todo.id})" 
+                                style="background: #C39289; color: #F2EEED; border: none; padding: 0.5rem; border-radius: 0.3rem; cursor: pointer; font-size: 0.8rem;">
+                            🗑️
+                        </button>
+                    </div>
+                    ` : ''}
+                `;
+                
+                container.appendChild(todoDiv);
+            });
+        }
+
+        function formatDateTime(isoString) {
+            if (!isoString) return '';
+            try {
+                const date = new Date(isoString);
+                return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+            } catch (e) {
+                return '';
+            }
+        }
+
+        let isSelectMode = false;
+        let selectedTodos = new Set();
+
+        function clearCompletedTodos() {
+            const completedCount = todos.filter(t => t.completed).length;
+            if (completedCount === 0) {
+                showNotification('沒有已完成的待辦事項', 'warning');
+                return;
+            }
+            
+            if (confirm(`確定要清除 ${completedCount} 個已完成的待辦事項嗎？`)) {
+                todos = todos.filter(t => !t.completed);
+                saveData();
+                displayTodos();
+                showNotification('✅ 已清除完成的待辦事項', 'success');
+            }
+        }
+
+        function clearAllTodos() {
+            if (todos.length === 0) {
+                showNotification('沒有待辦事項可以清除', 'warning');
+                return;
+            }
+            
+            if (confirm(`確定要清除全部 ${todos.length} 個待辦事項嗎？此操作無法復原！`)) {
+                todos = [];
+                selectedTodos.clear();
+                isSelectMode = false;
+                saveData();
+                displayTodos();
+                showNotification('✅ 已清除全部待辦事項', 'success');
+            }
+        }
+
+        function clearPendingTodos() {
+            const pendingCount = todos.filter(t => !t.completed).length;
+            if (pendingCount === 0) {
+                showNotification('沒有未完成的待辦事項', 'warning');
+                return;
+            }
+            
+            if (confirm(`確定要清除 ${pendingCount} 個未完成的待辦事項嗎？`)) {
+                todos = todos.filter(t => t.completed);
+                saveData();
+                displayTodos();
+                showNotification('✅ 已清除未完成的待辦事項', 'success');
+            }
+        }
+
+        function selectDeleteMode() {
+            isSelectMode = !isSelectMode;
+            selectedTodos.clear();
+            displayTodos();
+            
+            if (isSelectMode) {
+                showNotification('📋 批量刪除模式：勾選要刪除的項目', 'warning');
+            }
+        }
+
+        function toggleSelectTodo(id, event) {
+            event.stopPropagation();
+            
+            if (selectedTodos.has(id)) {
+                selectedTodos.delete(id);
+            } else {
+                selectedTodos.add(id);
+            }
+            
+            // 更新視覺效果
+            const todoElement = event.target.closest('.todo-item');
+            if (todoElement) {
+                if (selectedTodos.has(id)) {
+                    todoElement.style.background = '#ffebee';
+                    todoElement.style.borderColor = '#e74c3c';
+                } else {
+                    const todo = todos.find(t => t.id === id);
+                    todoElement.style.background = todo && todo.completed ? '#E3E7EA' : '#F2EEED';
+                    todoElement.style.borderColor = '#D6DCDB';
+                }
+            }
+        }
+
+        function deleteSelectedTodos() {
+            if (selectedTodos.size === 0) {
+                showNotification('請先選擇要刪除的待辦事項', 'warning');
+                return;
+            }
+            
+            if (confirm(`確定要刪除 ${selectedTodos.size} 個選中的待辦事項嗎？`)) {
+                todos = todos.filter(t => !selectedTodos.has(t.id));
+                selectedTodos.clear();
+                isSelectMode = false;
+                saveData();
+                displayTodos();
+                showNotification('✅ 已刪除選中的待辦事項', 'success');
+            }
+        }
+
+        function selectAllTodos() {
+            if (selectedTodos.size === todos.length) {
+                selectedTodos.clear();
+            } else {
+                selectedTodos.clear();
+                todos.forEach(todo => selectedTodos.add(todo.id));
+            }
+            displayTodos();
+        }
+
+        // 統計功能（簡化版）
+        function showStatsModal() {
+            const totalEntries = entries.length;
+            const totalChanges = workChanges.length;
+            const thisMonthEntries = entries.filter(e => {
+                const currentMonth = new Date().toISOString().slice(0, 7);
+                return e.date.startsWith(currentMonth);
+            }).length;
+            
+            showNotification(`📊 統計：共 ${totalEntries} 筆日誌，${totalChanges} 筆變更記錄，本月 ${thisMonthEntries} 筆`, 'success');
+        }
+
+        // 急救箱耗材功能（簡化版）
+        function showSuppliesModal() {
+            showNotification('急救箱耗材管理功能開發中...', 'warning');
+        }
+
+        // 備份設定功能
+        function showBackupSettings() {
+            const modal = document.getElementById('backupModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+            } else {
+                // 如果沒有備份模態框，直接顯示備份選項
+                showBackupOptions();
+            }
+        }
+
+        function showBackupOptions() {
+            const backupOptions = `
+                <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;">
+                    <div style="background: #F2EEED; border-radius: 1rem; padding: 2rem; max-width: 500px; width: 90%; box-shadow: 0 20px 40px rgba(0,0,0,0.3);">
+                        <h2 style="color: #8D6B61; margin-bottom: 1.5rem; font-size: 1.5rem; text-align: center;">💾 備份與還原</h2>
+                        
+                        <div style="margin-bottom: 2rem;">
+                            <h3 style="color: #8D6B61; margin-bottom: 1rem;">📤 匯出備份</h3>
+                            <div style="display: grid; gap: 0.5rem;">
+                                <button onclick="exportJsonBackup(); closeBackupModal();" 
+                                        style="background: #A1B0AD; color: #8D6B61; border: none; padding: 1rem; border-radius: 0.5rem; cursor: pointer; font-weight: 500;">
+                                    📄 匯出 JSON 完整備份
+                                </button>
+                                <button onclick="exportData(); closeBackupModal();" 
+                                        style="background: #C39289; color: #F2EEED; border: none; padding: 1rem; border-radius: 0.5rem; cursor: pointer; font-weight: 500;">
+                                    📊 匯出 Excel 格式
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 2rem;">
+                            <h3 style="color: #8D6B61; margin-bottom: 1rem;">📥 匯入備份</h3>
+                            <div style="display: grid; gap: 0.5rem;">
+                                <button onclick="closeBackupModal(); showImportModal();" 
+                                        style="background: #82898D; color: #F2EEED; border: none; padding: 1rem; border-radius: 0.5rem; cursor: pointer; font-weight: 500;">
+                                    📥 匯入備份檔案
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 2rem;">
+                            <h3 style="color: #8D6B61; margin-bottom: 1rem;">📊 目前資料統計</h3>
+                            <div style="background: #E3E7EA; padding: 1rem; border-radius: 0.5rem; font-size: 0.9rem;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                                    <div>📝 工作日誌：<strong>${entries.length}</strong> 筆</div>
+                                    <div>🔄 變更記錄：<strong>${workChanges.length}</strong> 筆</div>
+                                    <div>☐ 待辦事項：<strong>${todos.length}</strong> 筆</div>
+                                    <div>💾 範本設定：<strong>5</strong> 個</div>
+                                </div>
+                                <div style="margin-top: 0.5rem; color: #666; font-size: 0.8rem;">
+                                    最後儲存：${getLastSaveTime()}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 1.5rem;">
+                            <h3 style="color: #e74c3c; margin-bottom: 1rem;">⚠️ 危險操作</h3>
+                            <button onclick="clearAllData()" 
+                                    style="background: #e74c3c; color: white; border: none; padding: 1rem; border-radius: 0.5rem; cursor: pointer; font-weight: 500; width: 100%;">
+                                🗑️ 清除所有資料
+                            </button>
+                        </div>
+                        
+                        <div style="text-align: center;">
+                            <button onclick="closeBackupModal()" 
+                                    style="background: #95a5a6; color: white; border: none; padding: 0.75rem 2rem; border-radius: 0.5rem; cursor: pointer;">
+                                關閉
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            const modalDiv = document.createElement('div');
+            modalDiv.id = 'tempBackupModal';
+            modalDiv.innerHTML = backupOptions;
+            document.body.appendChild(modalDiv);
+        }
+
+        function closeBackupModal() {
+            const tempModal = document.getElementById('tempBackupModal');
+            if (tempModal) {
+                tempModal.remove();
+            }
+            
+            const modal = document.getElementById('backupModal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function getLastSaveTime() {
+            const saved = localStorage.getItem('nursingJournalData');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    const lastEntry = entries[0];
+                    const lastChange = workChanges[0];
+                    const lastTodo = todos[0];
+                    
+                    let latestTime = null;
+                    
+                    if (lastEntry && lastEntry.createdAt) {
+                        latestTime = new Date(lastEntry.createdAt);
+                    }
+                    
+                    if (lastChange && lastChange.createdAt) {
+                        const changeTime = new Date(lastChange.createdAt);
+                        if (!latestTime || changeTime > latestTime) {
+                            latestTime = changeTime;
+                        }
+                    }
+                    
+                    if (lastTodo && lastTodo.createdAt) {
+                        const todoTime = new Date(lastTodo.createdAt);
+                        if (!latestTime || todoTime > latestTime) {
+                            latestTime = todoTime;
+                        }
+                    }
+                    
+                    if (latestTime) {
+                        return `${latestTime.getMonth() + 1}/${latestTime.getDate()} ${latestTime.getHours().toString().padStart(2, '0')}:${latestTime.getMinutes().toString().padStart(2, '0')}`;
+                    }
+                } catch (e) {
+                    console.error('取得最後儲存時間失敗:', e);
+                }
+            }
+            return '尚未儲存';
+        }
+
+        function clearAllData() {
+            const totalItems = entries.length + workChanges.length + todos.length;
+            
+            if (totalItems === 0) {
+                showNotification('沒有資料需要清除', 'warning');
+                return;
+            }
+            
+            const confirmMessage = `⚠️ 危險操作確認 ⚠️\n\n即將清除以下所有資料：\n• ${entries.length} 筆工作日誌\n• ${workChanges.length} 筆變更記錄\n• ${todos.length} 筆待辦事項\n• 所有範本設定\n\n此操作無法復原！\n\n確定要繼續嗎？`;
+            
+            if (confirm(confirmMessage)) {
+                const doubleConfirm = confirm('🚨 最後確認 🚨\n\n資料清除後將無法復原！\n建議先匯出備份。\n\n真的要清除所有資料嗎？');
+                
+                if (doubleConfirm) {
+                    // 清除所有資料
+                    entries = [];
+                    workChanges = [];
+                    todos = [];
+                    supplies = [];
+                    selectedTodos.clear();
+                    isSelectMode = false;
+                    
+                    // 重設範本為預設值
+                    templates = {
+                        routine: "✓ 例行健康檢查\n✓ 環境安全巡視\n✓ 醫療用品盤點\n✓ 文件記錄更新",
+                        meeting: "會議主題：\n參與人員：\n重要決議：\n後續行動：",
+                        emergency: "事件時間：\n事件地點：\n處理經過：\n後續追蹤：",
+                        health: "活動名稱：\n參與人數：\n活動內容：\n成效評估：",
+                        training: "訓練主題：\n講師：\n參與人員：\n重點內容：\n心得收穫："
+                    };
+                    
+                    templateNames = {
+                        routine: "例行工作",
+                        meeting: "會議記錄", 
+                        emergency: "緊急事件",
+                        health: "健康促進",
+                        training: "教育訓練"
+                    };
+                    
+                    // 儲存並更新顯示
+                    saveData();
+                    displayContent();
+                    updateTemplateButtons();
+                    closeBackupModal();
+                    
+                    showNotification('✅ 所有資料已清除', 'success');
+                }
+            }
+        }
+
+        function createBackupSchedule() {
+            // 自動備份功能（可選）
+            showNotification('自動備份功能開發中...', 'warning');
+        }
+    </script>
+</body>
+</html>
